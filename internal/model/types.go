@@ -11,6 +11,7 @@ type EventType string
 const (
 	EventTypeNote      EventType = "note"
 	EventTypeGitCommit EventType = "git_commit"
+	EventTypeUndo      EventType = "undo"
 )
 
 // WipsEvent represents a single event log.

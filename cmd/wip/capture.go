@@ -49,8 +49,9 @@ func runCaptureWrapper(cmd *cobra.Command, args []string) error {
 // GitShowFunc is a function that returns the output of git show
 type GitShowFunc func() ([]byte, error)
 
-// RunCapture executes the logic for capturing an event
-func RunCapture(s *store.Store, eventType string, gitShow GitShowFunc) error {
+// RunCapture runs the capture logic
+func RunCapture(s store.Store, eventType string, gitShow GitShowFunc) error {
+	// 1. Get Info
 	if eventType != "git-commit" {
 		return fmt.Errorf("unknown event type: %s", eventType)
 	}

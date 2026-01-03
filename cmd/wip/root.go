@@ -46,7 +46,7 @@ func runNoteWrapper(cmd *cobra.Command, args []string) error {
 }
 
 // RunNote executes the logic for the main wip command (recording a note)
-func RunNote(s *store.Store, message string) error {
+func RunNote(s store.Store, message string) error {
 	// 0. Check Config
 	cfg, err := config.Load()
 	if err == nil {

@@ -56,7 +56,7 @@ var tailCmd = &cobra.Command{
 
 		// Read current month file for MVP
 		filename := time.Now().Format("2006-01") + ".ndjson"
-		path := filepath.Join(s.RootDir, "events", filename)
+		path := filepath.Join(s.GetRootDir(), "events", filename)
 
 		f, err := os.Open(path)
 		if os.IsNotExist(err) {

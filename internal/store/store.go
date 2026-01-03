@@ -13,15 +13,31 @@ import (
 	"github.com/rynskrmt/wips-cli/internal/model"
 )
 
-// Store handles file system operations for wips-cli
-type Store struct {
+// Store defines the interface for data persistence
+type Store interface {
+	Prepare() error
+	AppendEvent(event *model.WipsEvent) error
+	SaveDict(dictName string, key string, value interface{}) error
+	LoadDict(dictName string) (map[string]interface{}, error)
+	GetEvents(start, end time.Time) ([]model.WipsEvent, error)
+	UpdateEvent(id string, mutator func(*model.WipsEvent) error) error
+	DeleteEvent(id string) error
+	GetRootDir() string
+}
+
+// FileStore handles file system operations for wips-cli
+type FileStore struct {
 	RootDir string
 	mu      sync.Mutex // Process-internal lock, file lock used for inter-process
 }
 
+func (s *FileStore) GetRootDir() string {
+	return s.RootDir
+}
+
 // NewStore creates a new store instance.
 // If rootDir is empty, it attempts to find the default data directory.
-func NewStore(rootDir string) (*Store, error) {
+func NewStore(rootDir string) (Store, error) {
 	if rootDir == "" {
 		// Env var check could be done here or by caller.
 		// For now assume caller handles env var precedence.
@@ -40,11 +56,11 @@ func NewStore(rootDir string) (*Store, error) {
 		}
 	}
 
-	return &Store{RootDir: rootDir}, nil
+	return &FileStore{RootDir: rootDir}, nil
 }
 
 // Prepare ensures necessary directories exist.
-func (s *Store) Prepare() error {
+func (s *FileStore) Prepare() error {
 	dirs := []string{
 		filepath.Join(s.RootDir, "events"),
 		filepath.Join(s.RootDir, "dict"),
@@ -58,7 +74,7 @@ func (s *Store) Prepare() error {
 }
 
 // AppendEvent appends an event to events/YYYY-MM.ndjson
-func (s *Store) AppendEvent(event *model.WipsEvent) error {
+func (s *FileStore) AppendEvent(event *model.WipsEvent) error {
 	filename := event.TS.Format("2006-01") + ".ndjson"
 	path := filepath.Join(s.RootDir, "events", filename)
 
@@ -93,7 +109,7 @@ func (s *Store) AppendEvent(event *model.WipsEvent) error {
 // SaveDict updates a dictionary file idempotently.
 // It reads the existing JSON, checks if the key exists, adds it if not, and writes back.
 // Uses file locking to prevent race conditions.
-func (s *Store) SaveDict(dictName string, key string, value interface{}) error {
+func (s *FileStore) SaveDict(dictName string, key string, value interface{}) error {
 	path := filepath.Join(s.RootDir, "dict", dictName+".json")
 
 	fileLock := flock.New(path)
@@ -163,7 +179,7 @@ func (s *Store) SaveDict(dictName string, key string, value interface{}) error {
 }
 
 // GetEvents returns events within the given time range.
-func (s *Store) GetEvents(start, end time.Time) ([]model.WipsEvent, error) {
+func (s *FileStore) GetEvents(start, end time.Time) ([]model.WipsEvent, error) {
 	var events []model.WipsEvent
 
 	// Iterate over months from start to end
@@ -201,7 +217,7 @@ func (s *Store) GetEvents(start, end time.Time) ([]model.WipsEvent, error) {
 }
 
 // UpdateEvent finds an event by ID and updates it using the mutator function.
-func (s *Store) UpdateEvent(id string, mutator func(*model.WipsEvent) error) error {
+func (s *FileStore) UpdateEvent(id string, mutator func(*model.WipsEvent) error) error {
 	// Parse ULID to get timestamp
 	uid, err := ulid.Parse(id)
 	if err != nil {
@@ -232,7 +248,7 @@ func (s *Store) UpdateEvent(id string, mutator func(*model.WipsEvent) error) err
 }
 
 // DeleteEvent deletes an event by ID.
-func (s *Store) DeleteEvent(id string) error {
+func (s *FileStore) DeleteEvent(id string) error {
 	// Parse ULID to get timestamp
 	uid, err := ulid.Parse(id)
 	if err != nil {
@@ -262,7 +278,7 @@ func (s *Store) DeleteEvent(id string) error {
 }
 
 // readEventsFromFile reads all events from a given file path.
-func (s *Store) readEventsFromFile(path string) ([]model.WipsEvent, error) {
+func (s *FileStore) readEventsFromFile(path string) ([]model.WipsEvent, error) {
 	fileLock := flock.New(path)
 	// Try shared lock for reading
 	locked, err := fileLock.TryRLock()
@@ -299,7 +315,7 @@ func (s *Store) readEventsFromFile(path string) ([]model.WipsEvent, error) {
 }
 
 // rewriteFile safely rewrites a file by reading all content, applying a transformation, and writing back.
-func (s *Store) rewriteFile(path string, transform func([]model.WipsEvent) ([]model.WipsEvent, error)) error {
+func (s *FileStore) rewriteFile(path string, transform func([]model.WipsEvent) ([]model.WipsEvent, error)) error {
 	fileLock := flock.New(path)
 	if err := fileLock.Lock(); err != nil {
 		return fmt.Errorf("failed to lock file %s: %w", path, err)
@@ -348,7 +364,7 @@ func (s *Store) rewriteFile(path string, transform func([]model.WipsEvent) ([]mo
 }
 
 // LoadDict loads a dictionary file.
-func (s *Store) LoadDict(dictName string) (map[string]interface{}, error) {
+func (s *FileStore) LoadDict(dictName string) (map[string]interface{}, error) {
 	path := filepath.Join(s.RootDir, "dict", dictName+".json")
 
 	fileLock := flock.New(path)
