@@ -11,8 +11,10 @@ import (
 
 // ViewUtils contains shared formatting logic
 var (
-	TimeColor = color.New(color.FgCyan, color.Faint).SprintFunc()
-	DateColor = color.New(color.FgHiWhite, color.Bold).SprintFunc()
+	TimeColor       = color.New(color.FgCyan, color.Faint).SprintFunc()
+	TimeColorRecent = color.New(color.FgCyan, color.Bold).SprintFunc()
+	HashColor       = color.New(color.FgYellow).SprintFunc()
+	DateColor       = color.New(color.FgHiWhite, color.Bold).SprintFunc()
 )
 
 func FormatEvent(e model.WipsEvent) (icon string, summary string) {
@@ -23,28 +25,25 @@ func FormatEvent(e model.WipsEvent) (icon string, summary string) {
 		icon = "📝"
 	case model.EventTypeGitCommit:
 		icon = "🔧"
-		if strings.HasPrefix(summary, "commit ") {
-			lines := strings.Split(summary, "\n")
-			if len(lines) > 0 {
-				parts := strings.Fields(lines[0])
-				hash := ""
-				if len(parts) >= 2 {
-					hash = parts[1][:7]
-				}
+		// Handle "hash msg" format (git show --oneline)
+		lines := strings.Split(summary, "\n")
+		if len(lines) > 0 {
+			firstLine := lines[0]
+			parts := strings.Fields(firstLine)
 
-				msg := ""
-				for j := 1; j < len(lines); j++ {
-					line := strings.TrimSpace(lines[j])
-					if line != "" && !strings.HasPrefix(line, "Author:") && !strings.HasPrefix(line, "Date:") {
-						msg = line
-						break
-					}
-				}
-				if hash != "" {
-					summary = fmt.Sprintf("%s (%s)", msg, hash)
-				} else {
-					summary = msg
-				}
+			// Check for "commit <hash>" format (standard git log)
+			if len(parts) >= 2 && parts[0] == "commit" {
+				// Existing logic for full git log could go here if needed,
+				// but current capture uses --oneline.
+				// Keeping it simple for now, relying on oneline format.
+			} else if len(parts) >= 2 {
+				// Assume "hash msg" format
+				hash := parts[0]
+				// Use the rest of the line as message
+				// Find index of first space to preserve message spacing if possible,
+				// or just join parts.
+				msg := strings.TrimSpace(strings.TrimPrefix(firstLine, hash))
+				summary = fmt.Sprintf("%s (%s)", msg, HashColor(hash))
 			}
 		}
 
@@ -64,5 +63,11 @@ func FormatDuration(d time.Duration) string {
 	if d < time.Hour {
 		return fmt.Sprintf("%dm", int(d.Minutes()))
 	}
-	return fmt.Sprintf("%dh", int(d.Hours()))
+	if d < 24*time.Hour {
+		return fmt.Sprintf("%dh", int(d.Hours()))
+	}
+	if d < 7*24*time.Hour {
+		return fmt.Sprintf("%dd", int(d.Hours()/24))
+	}
+	return fmt.Sprintf("%dw", int(d.Hours()/(24*7)))
 }

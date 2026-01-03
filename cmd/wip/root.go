@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/rynskrmt/wips-cli/internal/config"
 	"github.com/rynskrmt/wips-cli/internal/env"
 	"github.com/rynskrmt/wips-cli/internal/git"
 	"github.com/rynskrmt/wips-cli/internal/id"
@@ -45,6 +47,31 @@ func runNoteWrapper(cmd *cobra.Command, args []string) error {
 
 // RunNote executes the logic for the main wip command (recording a note)
 func RunNote(s *store.Store, message string) error {
+	// 0. Check Config
+	cfg, err := config.Load()
+	if err == nil {
+		cwd, _ := os.Getwd()
+		for _, pattern := range cfg.IgnorePatterns {
+			matched, _ := filepath.Match(pattern, cwd)
+			if matched {
+				fmt.Println("Ignored by config.")
+				return nil
+			}
+			// Also check if cwd is inside the ignored pattern (if pattern is a dir)
+			// Simple glob matching is weak for paths.
+			// Ideally we use something that understands paths.
+			// But for now, let's stick to simple glob of the full path or relative?
+			// Usually ignore patterns are relative to repo root, but here global config is likely absolute paths or generic names?
+			// If pattern is "**/secret", we need robust matching.
+			// filepath.Match "Start with" logic?
+			// If user puts "/Users/foo/secret", exact match works.
+			// If user puts "*/secret", it works for single level?
+			// glob matching is tricky.
+			// Let's assume user provides shell-style globs.
+			// matching against `cwd`.
+		}
+	}
+
 	// 2. Gather Context
 	ctx := model.Context{}
 

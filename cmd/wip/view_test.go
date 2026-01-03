@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -58,6 +59,17 @@ func TestFormatEvent(t *testing.T) {
 			wantIcon:    "📝",
 			wantSummary: "Hello ...",
 		},
+		{
+			name: "Git Commit (oneline)",
+			event: model.WipsEvent{
+				ID:      "5",
+				Content: "bcf0b48 fix: something\n stats...",
+				Type:    model.EventTypeGitCommit,
+				TS:      time.Now(),
+			},
+			wantIcon:    "🔧",
+			wantSummary: fmt.Sprintf("fix: something (%s)", HashColor("bcf0b48")),
+		},
 	}
 
 	for _, tt := range tests {
@@ -68,6 +80,53 @@ func TestFormatEvent(t *testing.T) {
 			}
 			if gotSummary != tt.wantSummary {
 				t.Errorf("FormatEvent() gotSummary = %q, want %q", gotSummary, tt.wantSummary)
+			}
+		})
+	}
+}
+
+func TestFormatDuration(t *testing.T) {
+	tests := []struct {
+		name string
+		d    time.Duration
+		want string
+	}{
+		{
+			name: "Minutes",
+			d:    10 * time.Minute,
+			want: "10m",
+		},
+		{
+			name: "Hours",
+			d:    5 * time.Hour,
+			want: "5h",
+		},
+		{
+			name: "Days",
+			d:    3 * 24 * time.Hour,
+			want: "3d",
+		},
+		{
+			name: "Weeks",
+			d:    2 * 7 * 24 * time.Hour,
+			want: "2w",
+		},
+		{
+			name: "Exactly 24 hours",
+			d:    24 * time.Hour,
+			want: "1d",
+		},
+		{
+			name: "Exactly 7 days",
+			d:    7 * 24 * time.Hour,
+			want: "1w",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FormatDuration(tt.d); got != tt.want {
+				t.Errorf("FormatDuration() = %v, want %v", got, tt.want)
 			}
 		})
 	}

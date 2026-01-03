@@ -59,11 +59,49 @@ make dev # Build and install to $GOPATH/bin (No sudo required)
 | Command           | Alias | Description                              | Example                            |
 | :---------------- | :---- | :--------------------------------------- | :--------------------------------- |
 | `wip <msg>`       | -     | Record a note with auto-detected context | `wip "Refactoring auth logic"`     |
-| `wip search <q>`  | -     | Search for events matching query         | `wip search "auth bug"`            |
 | `wip edit [id]`   | `e`   | Edit an event (default: latest)          | `wip e` / `wip e 01J...`           |
 | `wip delete [id]` | -     | Delete an event (default: latest)        | `wip delete` / `wip delete 01J...` |
-| `wip undo`        | `u`   | Undo the last recorded event             | `wip u`                            |
-| `wip summary`     | `sum` | Show summary of events (today/week)      | `wip sum --range=week`             |
+| `wip hooks`       | -     | Manage git hooks integration             | `wip hooks install`                |
+
+### Searching Events (`search`)
+
+Search supports natural language dates and powerful filters.
+
+```bash
+# Basic search
+wip search "auth bug"
+
+# Date filters (Natural language supported)
+wip search "fix" --from "yesterday" --to "today"
+wip search --from "last week"
+
+# Advanced filtering
+wip search --tag "bug" --type "commit"
+wip search "error \d+" --regex
+```
+
+### Summaries & Reports (`summary`)
+
+View a daily or weekly breakdown of your work.
+
+```bash
+# Daily summary (default: today)
+wip summary
+
+# Weekly summary
+wip summary --week
+wip summary --last-week
+
+# Custom range
+wip summary --days 3
+
+# Filter specific content
+wip summary --commits-only
+wip summary --notes-only
+
+# Exporting data
+wip summary --week --format md --out report.md
+```
 
 ### Viewing Logs (`tail`)
 
@@ -76,7 +114,7 @@ make dev # Build and install to $GOPATH/bin (No sudo required)
 | `wip tail --id`     | -      | Show events with IDs                      |
 | `wip tail -n 20`    | -      | Show last 20 events                       |
 
-### Git Integration
+## Git Integration
 
 To enable automatic commit logging, run this inside your repository:
 
@@ -85,9 +123,6 @@ wip hooks install
 ```
 
 Once installed, every `git commit` will be automatically logged to `wip`.
-
-
-
 
 ## Data Storage
 
@@ -99,4 +134,3 @@ Your data is stored in:
 ## License
 
 MIT License
-

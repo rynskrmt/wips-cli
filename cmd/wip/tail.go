@@ -112,14 +112,13 @@ var tailCmd = &cobra.Command{
 		for _, e := range shownEvents {
 
 			// Format Time
-			var timeStr string
-			if time.Since(e.TS) < 24*time.Hour {
-				// Relative
-				timeStr = FormatDuration(time.Since(e.TS))
+			d := time.Since(e.TS)
+			timeStr := FormatDuration(d)
+			if d < 24*time.Hour {
+				timeStr = TimeColorRecent(timeStr)
 			} else {
-				timeStr = e.TS.Format("01/02 15:04")
+				timeStr = TimeColor(timeStr)
 			}
-			timeStr = TimeColor(timeStr)
 
 			icon, summary := FormatEvent(e)
 
