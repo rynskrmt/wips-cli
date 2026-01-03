@@ -6,10 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"syscall"
-
 	"time"
 
+	"github.com/gofrs/flock"
 	"github.com/oklog/ulid/v2"
 	"github.com/rynskrmt/wips-cli/internal/model"
 )
@@ -63,16 +62,21 @@ func (s *Store) AppendEvent(event *model.WipsEvent) error {
 	filename := event.TS.Format("2006-01") + ".ndjson"
 	path := filepath.Join(s.RootDir, "events", filename)
 
+	fileLock := flock.New(path)
+	locked, err := fileLock.TryLock()
+	if err != nil {
+		return fmt.Errorf("failed to lock event file: %w", err)
+	}
+	if !locked {
+		return fmt.Errorf("failed to lock event file: file busy")
+	}
+	defer fileLock.Unlock()
+
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to open event file: %w", err)
 	}
 	defer f.Close()
-
-	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
-		return fmt.Errorf("failed to lock event file: %w", err)
-	}
-	defer syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
 
 	bytes, err := json.Marshal(event)
 	if err != nil {
@@ -92,6 +96,20 @@ func (s *Store) AppendEvent(event *model.WipsEvent) error {
 func (s *Store) SaveDict(dictName string, key string, value interface{}) error {
 	path := filepath.Join(s.RootDir, "dict", dictName+".json")
 
+	fileLock := flock.New(path)
+	locked, err := fileLock.TryLock()
+	if err != nil {
+		return fmt.Errorf("failed to lock dict file: %w", err)
+	}
+	if !locked {
+		// Ideally wait with timeout, but for CLI instant fail or retry is ok
+		// Let's try to blockingly lock with timeout? Or just Lock()
+		if err := fileLock.Lock(); err != nil {
+			return fmt.Errorf("failed to lock dict file: %w", err)
+		}
+	}
+	defer fileLock.Unlock()
+
 	// Open file with RDWR to allow reading and writing
 	// O_CREAT ensure it exists
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
@@ -99,12 +117,6 @@ func (s *Store) SaveDict(dictName string, key string, value interface{}) error {
 		return fmt.Errorf("failed to open dict file: %w", err)
 	}
 	defer f.Close()
-
-	// Exclusive lock for Read-Modify-Write
-	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
-		return fmt.Errorf("failed to lock dict file: %w", err)
-	}
-	defer syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
 
 	// Read content
 	var content map[string]interface{}
@@ -170,6 +182,8 @@ func (s *Store) GetEvents(start, end time.Time) ([]model.WipsEvent, error) {
 
 		fileEvents, err := s.readEventsFromFile(path)
 		if err != nil {
+			// Ignore if file just got deleted or permission denied? No, better error.
+			// But for CLI UX, maybe just log and continue? sticking to strict error for now.
 			return nil, err
 		}
 
@@ -249,22 +263,34 @@ func (s *Store) DeleteEvent(id string) error {
 
 // readEventsFromFile reads all events from a given file path.
 func (s *Store) readEventsFromFile(path string) ([]model.WipsEvent, error) {
+	fileLock := flock.New(path)
+	// Try shared lock for reading
+	locked, err := fileLock.TryRLock()
+	if err != nil {
+		return nil, fmt.Errorf("failed to lock file %s: %w", path, err)
+	}
+	if !locked {
+		// Fallback to blocking lock
+		if err := fileLock.RLock(); err != nil {
+			return nil, fmt.Errorf("failed to lock file %s: %w", path, err)
+		}
+	}
+	defer fileLock.Unlock()
+
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file %s: %w", path, err)
 	}
 	defer f.Close()
 
-	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_SH); err != nil {
-		return nil, fmt.Errorf("failed to lock file %s: %w", path, err)
-	}
-	defer syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
-
 	var events []model.WipsEvent
 	decoder := json.NewDecoder(f)
 	for decoder.More() {
 		var e model.WipsEvent
 		if err := decoder.Decode(&e); err != nil {
+			// It is possible to encounter errors with empty lines or corrupted data at the end
+			// For ndjson, we might want to continue or error out.
+			// Currently erroring out.
 			return nil, fmt.Errorf("failed to decode event in %s: %w", path, err)
 		}
 		events = append(events, e)
@@ -274,6 +300,12 @@ func (s *Store) readEventsFromFile(path string) ([]model.WipsEvent, error) {
 
 // rewriteFile safely rewrites a file by reading all content, applying a transformation, and writing back.
 func (s *Store) rewriteFile(path string, transform func([]model.WipsEvent) ([]model.WipsEvent, error)) error {
+	fileLock := flock.New(path)
+	if err := fileLock.Lock(); err != nil {
+		return fmt.Errorf("failed to lock file %s: %w", path, err)
+	}
+	defer fileLock.Unlock()
+
 	f, err := os.OpenFile(path, os.O_RDWR, 0644)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -282,11 +314,6 @@ func (s *Store) rewriteFile(path string, transform func([]model.WipsEvent) ([]mo
 		return fmt.Errorf("failed to open file %s: %w", path, err)
 	}
 	defer f.Close()
-
-	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
-		return fmt.Errorf("failed to lock file %s: %w", path, err)
-	}
-	defer syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
 
 	var events []model.WipsEvent
 	decoder := json.NewDecoder(f)
@@ -324,6 +351,12 @@ func (s *Store) rewriteFile(path string, transform func([]model.WipsEvent) ([]mo
 func (s *Store) LoadDict(dictName string) (map[string]interface{}, error) {
 	path := filepath.Join(s.RootDir, "dict", dictName+".json")
 
+	fileLock := flock.New(path)
+	if err := fileLock.RLock(); err != nil {
+		return nil, fmt.Errorf("failed to lock dict file: %w", err)
+	}
+	defer fileLock.Unlock()
+
 	f, err := os.Open(path)
 	if os.IsNotExist(err) {
 		return make(map[string]interface{}), nil
@@ -332,11 +365,6 @@ func (s *Store) LoadDict(dictName string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("failed to open dict file: %w", err)
 	}
 	defer f.Close()
-
-	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_SH); err != nil {
-		return nil, fmt.Errorf("failed to lock dict file: %w", err)
-	}
-	defer syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
 
 	var content map[string]interface{}
 	decoder := json.NewDecoder(f)
