@@ -60,7 +60,7 @@ var summaryCmd = &cobra.Command{
 			return err
 		}
 
-		if result.DayGroups == nil || len(result.DayGroups) == 0 {
+		if len(result.DayGroups) == 0 {
 			fmt.Println("No events found.")
 			return nil
 		}
