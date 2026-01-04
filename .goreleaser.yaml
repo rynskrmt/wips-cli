@@ -1,0 +1,135 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    main: ./cmd/wip
+    binary: wip
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of uname.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+    - goos: windows
+      format: zip
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      # - '^chore' (commented out to include chores for now if desired)
+
+brews:
+  - name: wips
+    repository:
+      owner: rynskrmt
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    
+    # Template for the url which is determined by the given Token (github, gitlab or gitea)
+    #
+    # Default depends on the client.
+    # url_template: "https://github.com/rynskrmt/homebrew-tap"
+
+    # Git author used to commit to the repository.
+    #
+    # Default: follows the author of the commit that triggered the release.
+    # commit_author:
+    #   name: goreleaserbot
+    #   email: goreleaser@carlosbecker.com
+
+    # The project name and its home page.
+    #
+    # Default: `binary` name and empty.
+    homepage: "https://github.com/rynskrmt/wips-cli"
+
+    # Template for the description.
+    #
+    # Default: empty.
+    description: "wips-cli is a command line tool for tracking your daily work."
+
+    # SPDX identifier of your app's license.
+    #
+    # Default: empty.
+    license: "MIT"
+
+    # Setting this will prevent goreleaser to actually try to commit the updated
+    # formula - instead, the formula file will be stored on the dist directory
+    # only, leaving the responsibility of publishing it to the user.
+    #
+    # Default: false.
+    # skip_upload: true
+
+    # Custom block for brew.
+    # Can be used to specify alternate downloads for devel or head releases.
+    #
+    # Default: empty.
+    # custom_block: |
+    #   head "https://github.com/some/package.git"
+    #   ...
+
+    # Packages your package depends on.
+    #
+    # Default: empty.
+    # dependencies:
+    #   - name: git
+    #   - name: zsh
+    #     type: optional
+
+    # Packages that conflict with your package.
+    #
+    # Default: empty.
+    # conflicts:
+    #   - svn
+    #   - bash
+
+    # Tests to run after installation.
+    #
+    # Default: empty.
+    test: |
+      system "#{bin}/wip --version"
+
+    # Purpose to be added to the formula.
+    #
+    # Default: empty.
+    # purpose: "Save your daily work implicitly."
+
+scoops:
+  - repository:
+      owner: rynskrmt
+      name: scoop-bucket
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    
+    name: wips
+    homepage: "https://github.com/rynskrmt/wips-cli"
+    description: "wips-cli is a command line tool for tracking your daily work."
+    license: "MIT"
