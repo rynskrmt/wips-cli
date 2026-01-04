@@ -13,6 +13,10 @@
 ![Windows](https://img.shields.io/badge/Windows-0078D6?style=flat&logo=windows&logoColor=white)
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
 
+<p align="center" style="margin: 20px 0;">
+    <img src="assets/basic-usage.gif" alt="動作デモ" width="800">
+</p>
+
 </div>
 
 ## wips-cliとは？
