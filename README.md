@@ -76,6 +76,10 @@ To view a breakdown of your work for the day, simply run
 $ wip summary   # or: wip sum
 ```
 
+<p align="center" style="margin: 20px 0;">
+    <img src="assets/summary.gif" alt="Summary Demo" width="800">
+</p>
+
 You can also check previous days or weeks
 
 ```shell
