@@ -33,13 +33,22 @@ Gitコミットの自動記録機能を使うには、`git`のインストール
 
 以下のいずれかの方法でインストールできます。
 
-| 方法   | コマンド                                                                                   |
-| ------ | ------------------------------------------------------------------------------------------ |
-| brew   | `brew install rynskrmt/tap/wips`                                                           |
-| scoop  | `scoop bucket add rynskrmt https://github.com/rynskrmt/scoop-bucket && scoop install wips` |
-| curl   | `curl -sfL https://raw.githubusercontent.com/rynskrmt/wips-cli/main/install.sh \| sh`      |
-| go     | `go install github.com/rynskrmt/wips-cli/cmd/wip@latest`                                   |
-| manual | リポジトリをクローンして `make dev` を実行                                                 |
+| 方法    | コマンド                                                                                   |
+| ------- | ------------------------------------------------------------------------------------------ |
+| brew    | `brew install rynskrmt/tap/wips`                                                           |
+| scoop   | `scoop bucket add rynskrmt https://github.com/rynskrmt/scoop-bucket && scoop install wips` |
+| release | [GitHub Releases](https://github.com/rynskrmt/wips-cli/releases) からダウンロード          |
+| curl    | `curl -sfL https://raw.githubusercontent.com/rynskrmt/wips-cli/main/install.sh \| sh`      |
+| go      | `go install github.com/rynskrmt/wips-cli/cmd/wip@latest`                                   |
+| build   | リポジトリをクローンして `make dev` を実行                                                 |
+
+### 手動インストール (バイナリ)
+
+1. [GitHub Releases](https://github.com/rynskrmt/wips-cli/releases) から、お使いのOSとアーキテクチャに合った最新のバイナリをダウンロードします。
+2. アーカイブを解凍します。
+3. `wip` バイナリを `PATH` の通ったディレクトリ（例：`/usr/local/bin` や `~/bin`）に移動します。
+4. 実行権限を付与します： `chmod +x /path/to/wip`
+
 
 ## 基本的な使い方
 
