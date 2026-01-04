@@ -13,6 +13,10 @@
 ![Windows](https://img.shields.io/badge/Windows-0078D6?style=flat&logo=windows&logoColor=white)
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
 
+<p align="center" style="margin: 20px 0;">
+    <img src="assets/basic-usage.gif" alt="Demo Video" width="800">
+</p>
+
 </div>
 
 ## What is wips-cli?
@@ -71,6 +75,10 @@ To view a breakdown of your work for the day, simply run
 ```shell
 $ wip summary   # or: wip sum
 ```
+
+<p align="center" style="margin: 20px 0;">
+    <img src="assets/summary.gif" alt="Summary Demo" width="800">
+</p>
 
 You can also check previous days or weeks
 
