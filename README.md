@@ -32,13 +32,22 @@ The only requirement is to have `git` installed for the automatic commit capture
 
 You can install `wips-cli` using one of the options listed below.
 
-| Source | Command                                                                                    |
-| ------ | ------------------------------------------------------------------------------------------ |
-| brew   | `brew install rynskrmt/tap/wips`                                                           |
-| scoop  | `scoop bucket add rynskrmt https://github.com/rynskrmt/scoop-bucket && scoop install wips` |
-| curl   | `curl -sfL https://raw.githubusercontent.com/rynskrmt/wips-cli/main/install.sh \| sh`      |
-| go     | `go install github.com/rynskrmt/wips-cli/cmd/wip@latest`                                   |
-| manual | Clone and run `make dev`                                                                   |
+| Source  | Command                                                                                    |
+| ------- | ------------------------------------------------------------------------------------------ |
+| brew    | `brew install rynskrmt/tap/wips`                                                           |
+| scoop   | `scoop bucket add rynskrmt https://github.com/rynskrmt/scoop-bucket && scoop install wips` |
+| release | Download from [GitHub Releases](https://github.com/rynskrmt/wips-cli/releases)             |
+| curl    | `curl -sfL https://raw.githubusercontent.com/rynskrmt/wips-cli/main/install.sh \| sh`      |
+| go      | `go install github.com/rynskrmt/wips-cli/cmd/wip@latest`                                   |
+| build   | Clone and run `make dev`                                                                   |
+
+### Manual Installation (Binary)
+
+1.  Download the latest binary for your OS and architecture from [GitHub Releases](https://github.com/rynskrmt/wips-cli/releases).
+2.  Unpack the archive.
+3.  Move the `wip` binary to a directory in your `PATH` (e.g., `/usr/local/bin` or `~/bin`).
+4.  Make sure it has execute permissions: `chmod +x /path/to/wip`.
+
 
 ## Usage
 
