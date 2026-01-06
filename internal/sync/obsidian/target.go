@@ -260,6 +260,9 @@ func (t *Target) updateFileContent(existing, newSection string) string {
 		sb.WriteString(lines[i] + "\n")
 	}
 	sb.WriteString(newSection + "\n")
+	if endIdx < len(lines) {
+		sb.WriteString("\n")
+	}
 	for i := endIdx; i < len(lines); i++ {
 		sb.WriteString(lines[i] + "\n")
 	}

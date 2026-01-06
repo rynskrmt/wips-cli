@@ -38,13 +38,18 @@ func GetConfigPath() (string, error) {
 	return filepath.Join(home, ".wip", "config.toml"), nil
 }
 
+// Load reads the config from the default file.
 func Load() (*Config, error) {
 	configPath, err := GetConfigPath()
 	if err != nil {
 		return nil, err
 	}
+	return LoadFrom(configPath)
+}
 
-	f, err := os.Open(configPath)
+// LoadFrom reads the config from a specific file path.
+func LoadFrom(path string) (*Config, error) {
+	f, err := os.Open(path)
 	if os.IsNotExist(err) {
 		return &Config{}, nil // Return empty config if not exists
 	}
@@ -62,20 +67,24 @@ func Load() (*Config, error) {
 	return &cfg, nil
 }
 
-// Save writes the config to file.
+// Save writes the config to the default file.
 func (c *Config) Save() error {
 	configPath, err := GetConfigPath()
 	if err != nil {
 		return err
 	}
+	return c.SaveTo(configPath)
+}
 
+// SaveTo writes the config to a specific file path.
+func (c *Config) SaveTo(path string) error {
 	// Ensure directory exists
-	dir := filepath.Dir(configPath)
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create config dir: %w", err)
 	}
 
-	f, err := os.Create(configPath)
+	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
