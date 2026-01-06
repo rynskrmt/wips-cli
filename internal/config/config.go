@@ -10,8 +10,23 @@ import (
 )
 
 type Config struct {
-	IgnorePatterns    []string `toml:"ignore_patterns"`
-	HiddenDirectories []string `toml:"hidden_directories"`
+	IgnorePatterns    []string   `toml:"ignore_patterns"`
+	HiddenDirectories []string   `toml:"hidden_directories"`
+	Sync              SyncConfig `toml:"sync"`
+}
+
+type SyncConfig struct {
+	DefaultTargets []string        `toml:"default_targets"`
+	Obsidian       *ObsidianConfig `toml:"obsidian,omitempty"`
+}
+
+type ObsidianConfig struct {
+	Enabled             bool   `toml:"enabled"`
+	Path                string `toml:"path"` // Absolute path to Daily Notes folder
+	DailyFilenameFormat string `toml:"daily_filename_format"`
+	SectionHeader       string `toml:"section_header"`
+	AppendAt            string `toml:"append_at"` // "top" or "bottom"
+	SummaryFormat       string `toml:"summary_format"`
 }
 
 // GetConfigPath returns the path to the config file.

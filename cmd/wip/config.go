@@ -94,6 +94,17 @@ var configListCmd = &cobra.Command{
 				fmt.Printf("  - %s\n", p)
 			}
 		}
+		fmt.Println()
+
+		fmt.Println("Sync Configuration:")
+		if cfg.Sync.Obsidian != nil && cfg.Sync.Obsidian.Enabled {
+			fmt.Printf("  Obsidian: Enabled\n")
+			fmt.Printf("    Path: %s\n", cfg.Sync.Obsidian.Path)
+		} else if cfg.Sync.Obsidian != nil {
+			fmt.Printf("  Obsidian: Disabled (Path: %s)\n", cfg.Sync.Obsidian.Path)
+		} else {
+			fmt.Println("  Obsidian: Not configured")
+		}
 
 		return nil
 	},
