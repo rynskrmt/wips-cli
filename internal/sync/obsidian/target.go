@@ -17,10 +17,15 @@ import (
 type Target struct {
 	cfg   *config.ObsidianConfig
 	store store.Store
+	opts  TargetOptions
 }
 
-func NewTarget(cfg *config.ObsidianConfig, s store.Store) *Target {
-	return &Target{cfg: cfg, store: s}
+type TargetOptions struct {
+	CreateMissing bool
+}
+
+func NewTarget(cfg *config.ObsidianConfig, s store.Store, opts TargetOptions) *Target {
+	return &Target{cfg: cfg, store: s, opts: opts}
 }
 
 func (t *Target) Name() string {
@@ -94,6 +99,14 @@ func (t *Target) syncDate(dateStr string, events []model.WipsEvent) error {
 			return fmt.Errorf("failed to read existing file: %w", err)
 		}
 		existingContent = string(b)
+	} else if os.IsNotExist(err) {
+		if !t.opts.CreateMissing {
+			fmt.Printf("⚠️  %s: Daily note does not exist (skipping)\n", dateStr)
+			return nil
+		}
+		// Proceed to create
+	} else {
+		return fmt.Errorf("failed to stat file: %w", err)
 	}
 
 	// 4. Update file content

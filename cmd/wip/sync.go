@@ -43,7 +43,11 @@ var syncCmd = &cobra.Command{
 
 		// Register Targets
 		if cfg.Sync.Obsidian != nil {
-			mgr.RegisterTarget(obsidian.NewTarget(cfg.Sync.Obsidian, s))
+			createMissing, _ := cmd.Flags().GetBool("create")
+			opts := obsidian.TargetOptions{
+				CreateMissing: createMissing,
+			}
+			mgr.RegisterTarget(obsidian.NewTarget(cfg.Sync.Obsidian, s, opts))
 		}
 
 		// Determine which targets to run
@@ -153,4 +157,5 @@ func init() {
 	syncCmd.Flags().Int("days", 0, "Sync past N days")
 	syncCmd.Flags().Bool("all", false, "Sync all history")
 	syncCmd.Flags().Bool("dry-run", false, "Dry run")
+	syncCmd.Flags().Bool("create", false, "Create daily note if missing")
 }
