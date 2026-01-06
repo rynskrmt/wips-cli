@@ -9,6 +9,7 @@ import (
 
 	"github.com/rynskrmt/wips-cli/internal/model"
 	"github.com/rynskrmt/wips-cli/internal/store"
+	"github.com/rynskrmt/wips-cli/internal/usecase"
 )
 
 func TestRunNote(t *testing.T) {
@@ -29,9 +30,10 @@ func TestRunNote(t *testing.T) {
 
 	// Test
 	msg := "Integration Test Note"
-	err = RunNote(s, msg)
+	u := usecase.NewNoteUsecase(s)
+	err = u.RecordNote(msg, tempDir)
 	if err != nil {
-		t.Errorf("RunNote() error = %v", err)
+		t.Errorf("RecordNote() error = %v", err)
 	}
 
 	// Verify
@@ -57,9 +59,10 @@ func TestRunCapture(t *testing.T) {
 		return []byte("commit abc1234\n 1 file changed"), nil
 	}
 
-	err = RunCapture(s, "git-commit", mockGitShow)
+	u := usecase.NewCaptureUsecase(s)
+	err = u.CaptureEvent("git-commit", tempDir, mockGitShow)
 	if err != nil {
-		t.Errorf("RunCapture() error = %v", err)
+		t.Errorf("CaptureEvent() error = %v", err)
 	}
 
 	verifyEventExists(t, tempDir, model.EventTypeGitCommit, "commit abc1234\n 1 file changed")

@@ -56,13 +56,13 @@ func TestSummaryUsecase_GetSummary(t *testing.T) {
 	events := []model.WipsEvent{
 		{
 			ID:   "1",
-			TS:   now.Add(-1 * time.Hour), // Today
+			TS:   now, // Today (now is always within today's range up to now)
 			Type: model.EventTypeNote,
 			Ctx:  model.Context{RepoID: &repoID},
 		},
 		{
 			ID:   "2",
-			TS:   now.Add(-2 * time.Hour), // Today
+			TS:   now.Add(-1 * time.Minute), // Today (hopefully still today, else relies on being caught by logic)
 			Type: model.EventTypeGitCommit,
 			Ctx:  model.Context{CwdID: &cwdID},
 		},
