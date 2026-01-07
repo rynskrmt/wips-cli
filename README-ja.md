@@ -76,6 +76,7 @@ wip [command]
 | `edit`    | `e`        | イベントをIDで編集（デフォルト：最新）               |
 | `delete`  |            | イベントをIDで削除（デフォルト：最新）               |
 | `hooks`   |            | Gitフック連携の管理（コミットの自動記録）            |
+| `sync`    |            | 外部ツール（Obsidian等）へのログ同期                 |
 | `config`  |            | グローバル設定の管理                                 |
 
 ## 最近のアクティビティ
@@ -116,9 +117,47 @@ $ wip sum --days 3     # 過去3日分
 $ wip sum --week --format md --out report.md
 ```
 
+## Obsidian同期機能 (Experimental)
+
+外部ツール（Obsidian等）と日々のログを同期できます。
+
+### Obsidianの設定
+
+まず、Obsidianのデイリーノート（Daily Note）フォルダのパスを設定します：
+
+```shell
+$ wip config sync obsidian enable --path "~/ObsidianVault/Daily"
+```
+
+### 同期の実行
+
+今日のログ（ディレクトリごとにグループ化）をデイリーノートに同期するには、以下を実行します：
+
+```shell
+$ wip sync
+```
+
+デイリーノートの特定セクション（デフォルト：`## wips-cli logs`）にログを追記します。
+何度実行しても内容は重複せず、該当セクションが最新の状態に更新されます。
+
+### オプション
+
+- `--days <N>`: 過去N日分のログを同期します。まとめて同期したい場合に便利です。
+  ```shell
+  $ wip sync --days 3
+  ```
+- `--all`: 過去のすべての履歴（現在は直近365日分）を同期します。
+  ```shell
+  $ wip sync --all
+  ```
+- `--create`: デイリーノートが存在しない場合に新規作成します。（デフォルト：存在しない日付はスキップ）
+  ```shell
+  $ wip sync --create
+  ```
+
 ## 検索機能
 
-自然言語での日付指定や、強力なフィルタを使った検索が可能です。
+自然言語での日付指定や、フィルタを使った検索が可能です。
 
 ```shell
 $ wip search "auth bug" --from "last week"

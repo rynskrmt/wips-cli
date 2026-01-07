@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/oklog/ulid/v2"
+	"github.com/rynskrmt/wips-cli/internal/app"
 	"github.com/rynskrmt/wips-cli/internal/model"
-	"github.com/rynskrmt/wips-cli/internal/store"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,7 @@ var editCmd = &cobra.Command{
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
-		s, err := store.NewStore(os.Getenv("WIPS_HOME"))
+		a, err := app.New()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -36,7 +36,7 @@ var editCmd = &cobra.Command{
 		// Get events for the current month
 		now := time.Now()
 		start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-		events, err := s.GetEvents(start, now)
+		events, err := a.Store.GetEvents(start, now)
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -55,9 +55,10 @@ var editCmd = &cobra.Command{
 		return completions, cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		s, err := store.NewStore(os.Getenv("WIPS_HOME"))
+		// Initialize app with centralized dependencies
+		a, err := app.New()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to initialize app: %w", err)
 		}
 
 		var eventID string
@@ -75,9 +76,9 @@ var editCmd = &cobra.Command{
 			// We use a small window around the timestamp to find the event
 			// ULID has ms precision, while stored time.Now() has better precision.
 			// Exact match won't work.
-			events, err := s.GetEvents(ts.Add(-1*time.Minute), ts.Add(1*time.Minute))
+			events, err := a.Store.GetEvents(ts.Add(-1*time.Minute), ts.Add(1*time.Minute))
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get events: %w", err)
 			}
 
 			found := false
@@ -96,9 +97,9 @@ var editCmd = &cobra.Command{
 			// Get latest event of this month
 			now := time.Now()
 			start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-			events, err := s.GetEvents(start, now)
+			events, err := a.Store.GetEvents(start, now)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get events: %w", err)
 			}
 			if len(events) == 0 {
 				return fmt.Errorf("no events found for this month")
@@ -110,7 +111,7 @@ var editCmd = &cobra.Command{
 		// Edit content
 		newContent, err := openEditor(targetEvent.Content)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open editor: %w", err)
 		}
 
 		if newContent == targetEvent.Content {
@@ -119,12 +120,12 @@ var editCmd = &cobra.Command{
 		}
 
 		// Update event
-		err = s.UpdateEvent(eventID, func(e *model.WipsEvent) error {
+		err = a.Store.UpdateEvent(eventID, func(e *model.WipsEvent) error {
 			e.Content = newContent
 			return nil
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to update event %s: %w", eventID, err)
 		}
 
 		fmt.Printf("Event %s updated.\n", eventID)

@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/rynskrmt/wips-cli/internal/app"
 	"github.com/rynskrmt/wips-cli/internal/model"
-	"github.com/rynskrmt/wips-cli/internal/store"
+	"github.com/rynskrmt/wips-cli/internal/ui"
 	"github.com/spf13/cobra"
 	"github.com/tj/go-naturaldate"
 )
@@ -41,9 +42,10 @@ var searchCmd = &cobra.Command{
 		tags, _ := cmd.Flags().GetStringSlice("tag")
 		eventType, _ := cmd.Flags().GetString("type")
 
-		s, err := store.NewStore(os.Getenv("WIPS_HOME"))
+		// Initialize app with centralized dependencies
+		a, err := app.New()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to initialize app: %w", err)
 		}
 
 		// 1. Date Parsing
@@ -77,9 +79,9 @@ var searchCmd = &cobra.Command{
 			end = parsed.Add(24*time.Hour - time.Nanosecond) // End of that day
 		}
 
-		events, err := s.GetEvents(start, end)
+		events, err := a.Store.GetEvents(start, end)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get events: %w", err)
 		}
 
 		// 2. Prepare Regex
@@ -152,7 +154,7 @@ var searchCmd = &cobra.Command{
 
 		for _, e := range matchedEvents {
 			timeStr := dateStyle.Render(e.TS.Format("2006-01-02 15:04"))
-			icon, summary := FormatEvent(e)
+			icon, summary := ui.FormatEventWithStyle(e)
 
 			fmt.Fprintf(w, "%s\t%s  %s\n", timeStr, icon, summary)
 		}
