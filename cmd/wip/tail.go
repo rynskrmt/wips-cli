@@ -10,9 +10,10 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/rynskrmt/wips-cli/internal/config"
+	"github.com/rynskrmt/wips-cli/internal/app"
+	"github.com/rynskrmt/wips-cli/internal/filter"
 	"github.com/rynskrmt/wips-cli/internal/model"
-	"github.com/rynskrmt/wips-cli/internal/store"
+	"github.com/rynskrmt/wips-cli/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -37,36 +38,30 @@ var tailCmd = &cobra.Command{
 		// Get current CWD to filter by path hierarchy
 		cwd, err := os.Getwd()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 
-		// Load config for hidden directories
-		cfg, _ := config.Load()
-		var hiddenDirs []string
-		if cfg != nil {
-			hiddenDirs = cfg.HiddenDirectories
-		}
-
-		s, err := store.NewStore(os.Getenv("WIPS_HOME"))
+		// Initialize app with centralized dependencies
+		a, err := app.New()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to initialize app: %w", err)
 		}
 
 		// Load dirs dict for path lookup
-		dirsDict, err := s.LoadDict("dirs")
+		dirsDict, err := a.Store.LoadDict("dirs")
 		if err != nil {
 			dirsDict = make(map[string]interface{})
 		}
 
 		// Load repos dict
-		reposDict, err := s.LoadDict("repos")
+		reposDict, err := a.Store.LoadDict("repos")
 		if err != nil {
 			reposDict = make(map[string]interface{})
 		}
 
 		// Read current month file
 		filename := time.Now().Format("2006-01") + ".ndjson"
-		path := filepath.Join(s.GetRootDir(), "events", filename)
+		path := filepath.Join(a.Store.GetRootDir(), "events", filename)
 
 		f, err := os.Open(path)
 		if os.IsNotExist(err) {
@@ -74,7 +69,7 @@ var tailCmd = &cobra.Command{
 			return nil
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open events file: %w", err)
 		}
 		defer f.Close()
 
@@ -91,20 +86,9 @@ var tailCmd = &cobra.Command{
 					}
 				}
 
-				// Hidden directory filtering
-				if !includeHidden && len(hiddenDirs) > 0 {
-					isHidden := false
-					for _, hiddenDir := range hiddenDirs {
-						if strings.HasPrefix(dirPath, hiddenDir) {
-							if dirPath == hiddenDir || strings.HasPrefix(dirPath, hiddenDir+"/") {
-								isHidden = true
-								break
-							}
-						}
-					}
-					if isHidden {
-						continue
-					}
+				// Hidden directory filtering using shared filter package
+				if !includeHidden && filter.IsHiddenDir(dirPath, a.HiddenDirs()) {
+					continue
 				}
 
 				// Filter by context if not global
@@ -138,16 +122,10 @@ var tailCmd = &cobra.Command{
 
 		for _, e := range shownEvents {
 
-			// Format Time
-			d := time.Since(e.TS)
-			timeStr := FormatDuration(d)
-			if d < 24*time.Hour {
-				timeStr = TimeColorRecent(timeStr)
-			} else {
-				timeStr = TimeColor(timeStr)
-			}
+			// Format Time using shared format package
+			timeStr := ui.FormatTimeRelative(e.TS)
 
-			icon, summary := FormatEvent(e)
+			icon, summary := ui.FormatEventWithStyle(e)
 
 			// Build context string for global mode
 			var ctxStr string

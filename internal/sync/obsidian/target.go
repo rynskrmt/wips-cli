@@ -12,6 +12,7 @@ import (
 	"github.com/rynskrmt/wips-cli/internal/config"
 	"github.com/rynskrmt/wips-cli/internal/model"
 	"github.com/rynskrmt/wips-cli/internal/store"
+	"github.com/rynskrmt/wips-cli/internal/ui"
 )
 
 type Target struct {
@@ -183,7 +184,7 @@ func (t *Target) generateContent(date time.Time, events []model.WipsEvent) (stri
 
 		for _, e := range group.Events {
 			timeStr := e.TS.Format("15:04")
-			content := cleanContent(e)
+			content := ui.FormatEventPlain(e)
 			// Using standard markdown list format
 			sb.WriteString(fmt.Sprintf("- **%s**: %s\n", timeStr, content))
 		}
@@ -284,24 +285,6 @@ func getHeaderLevel(line string) int {
 	// But in markdown, headers start with #.
 	// If it doesn't start with #, level is 0.
 	return level
-}
-
-func cleanContent(e model.WipsEvent) string {
-	// Simple duplicate of ui.cleanContent
-	content := e.Content
-	if e.Type == model.EventTypeGitCommit {
-		lines := strings.Split(content, "\n")
-		if len(lines) > 0 {
-			content = lines[0]
-			parts := strings.Fields(content)
-			if len(parts) >= 2 {
-				hash := parts[0]
-				msg := strings.TrimSpace(strings.TrimPrefix(content, hash))
-				content = fmt.Sprintf("%s [%s]", msg, hash)
-			}
-		}
-	}
-	return content
 }
 
 func formatFilename(format string, date time.Time) string {

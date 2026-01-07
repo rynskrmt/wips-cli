@@ -5,8 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/rynskrmt/wips-cli/internal/config"
-	"github.com/rynskrmt/wips-cli/internal/store"
+	"github.com/rynskrmt/wips-cli/internal/app"
 	"github.com/rynskrmt/wips-cli/internal/ui"
 	"github.com/rynskrmt/wips-cli/internal/usecase"
 	"github.com/spf13/cobra"
@@ -48,19 +47,13 @@ var summaryCmd = &cobra.Command{
 			format = "md" // Default to markdown if outputting to file
 		}
 
-		// Load config for hidden directories
-		cfg, _ := config.Load()
-		var hiddenDirs []string
-		if cfg != nil {
-			hiddenDirs = cfg.HiddenDirectories
-		}
-
-		s, err := store.NewStore(os.Getenv("WIPS_HOME"))
+		// Initialize app with centralized dependencies
+		a, err := app.New()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to initialize app: %w", err)
 		}
 
-		uc := usecase.NewSummaryUsecase(s)
+		uc := usecase.NewSummaryUsecase(a.Store)
 		opts := usecase.SummaryOptions{
 			Week:          week,
 			LastWeek:      lastWeek,
@@ -69,12 +62,12 @@ var summaryCmd = &cobra.Command{
 			NotesOnly:     notesOnly,
 			IncludeHidden: includeHidden,
 			HiddenOnly:    hiddenOnly,
-			HiddenDirs:    hiddenDirs,
+			HiddenDirs:    a.HiddenDirs(),
 		}
 
 		result, err := uc.GetSummary(opts)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get summary: %w", err)
 		}
 
 		if len(result.DayGroups) == 0 {
@@ -86,7 +79,7 @@ var summaryCmd = &cobra.Command{
 		if outPath != "" {
 			f, err := os.Create(outPath)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create output file: %w", err)
 			}
 			defer f.Close()
 			out = f
@@ -98,7 +91,7 @@ var summaryCmd = &cobra.Command{
 			renderer.RenderPretty(result)
 		} else {
 			if err := renderer.RenderExport(result, format); err != nil {
-				return err
+				return fmt.Errorf("failed to render export: %w", err)
 			}
 			if outPath != "" {
 				fmt.Printf("Exported to %s\n", outPath)

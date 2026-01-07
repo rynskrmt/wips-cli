@@ -3,11 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/rynskrmt/wips-cli/internal/config"
+	"github.com/rynskrmt/wips-cli/internal/app"
 	"github.com/rynskrmt/wips-cli/internal/model"
-	"github.com/rynskrmt/wips-cli/internal/store"
 	"github.com/rynskrmt/wips-cli/internal/sync"
 	"github.com/rynskrmt/wips-cli/internal/sync/obsidian"
 	"github.com/rynskrmt/wips-cli/internal/usecase"
@@ -26,17 +24,13 @@ var syncCmd = &cobra.Command{
 		all, _ := cmd.Flags().GetBool("all")
 		// dryRun, _ := cmd.Flags().GetBool("dry-run") // TODO: Implement dry-run in targets
 
-		// Load config
-		cfg, err := config.Load()
+		// Initialize app with centralized dependencies
+		a, err := app.New()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to initialize app: %w", err)
 		}
 
-		// Init Store
-		s, err := store.NewStore(os.Getenv("WIPS_HOME"))
-		if err != nil {
-			return err
-		}
+		cfg := a.Config
 
 		// Init Sync Manager
 		mgr := sync.NewManager()
@@ -47,7 +41,7 @@ var syncCmd = &cobra.Command{
 			opts := obsidian.TargetOptions{
 				CreateMissing: createMissing,
 			}
-			mgr.RegisterTarget(obsidian.NewTarget(cfg.Sync.Obsidian, s, opts))
+			mgr.RegisterTarget(obsidian.NewTarget(cfg.Sync.Obsidian, a.Store, opts))
 		}
 
 		// Determine which targets to run
@@ -74,7 +68,7 @@ var syncCmd = &cobra.Command{
 		}
 
 		// Prepare Usecase for fetching data
-		summaryUC := usecase.NewSummaryUsecase(s)
+		summaryUC := usecase.NewSummaryUsecase(a.Store)
 		opts := usecase.SummaryOptions{
 			IncludeHidden: false, // Default false for sync? Or true? Let's say false for now to keep private stuff private unless wanted.
 			// Logic for date selection relies on same logic as summary
@@ -115,7 +109,7 @@ var syncCmd = &cobra.Command{
 
 		result, err := summaryUC.GetSummary(opts)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get summary for sync: %w", err)
 		}
 
 		// Flatten result for Sync interface?

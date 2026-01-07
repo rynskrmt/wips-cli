@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pelletier/go-toml/v2"
+	"github.com/rynskrmt/wips-cli/internal/filter"
 )
 
 type Config struct {
@@ -143,15 +143,7 @@ func (c *Config) RemoveHiddenDir(path string) error {
 }
 
 // IsHiddenDir checks if a path is under a hidden directory.
+// Delegates to the filter package for the actual implementation.
 func (c *Config) IsHiddenDir(path string) bool {
-	for _, hiddenDir := range c.HiddenDirectories {
-		// Check if path starts with hiddenDir (is under the hidden directory)
-		if strings.HasPrefix(path, hiddenDir) {
-			// Ensure it's actually a subdirectory, not just a prefix match
-			if path == hiddenDir || strings.HasPrefix(path, hiddenDir+string(filepath.Separator)) {
-				return true
-			}
-		}
-	}
-	return false
+	return filter.IsHiddenDir(path, c.HiddenDirectories)
 }
