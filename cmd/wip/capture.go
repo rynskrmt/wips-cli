@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/rynskrmt/wips-cli/internal/store"
+	"github.com/rynskrmt/wips-cli/internal/app"
 	"github.com/rynskrmt/wips-cli/internal/usecase"
 	"github.com/spf13/cobra"
 )
@@ -24,13 +24,10 @@ var captureCmd = &cobra.Command{
 
 func runCaptureWrapper(cmd *cobra.Command, args []string) error {
 	eventType := args[0]
-	// Initialize Store
-	s, err := store.NewStore(os.Getenv("WIPS_HOME"))
+	// Initialize App
+	a, err := app.New()
 	if err != nil {
-		return err
-	}
-	if err := s.Prepare(); err != nil {
-		return err
+		return fmt.Errorf("failed to initialize app: %w", err)
 	}
 
 	// Default git show implementation
@@ -38,7 +35,7 @@ func runCaptureWrapper(cmd *cobra.Command, args []string) error {
 		return exec.Command("git", "show", "--stat", "--oneline", "--no-color", "HEAD").Output()
 	}
 
-	u := usecase.NewCaptureUsecase(s)
+	u := usecase.NewCaptureUsecase(a.Store)
 	cwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get current working directory: %w", err)

@@ -18,7 +18,12 @@ type App struct {
 }
 
 // New creates a new App instance with initialized dependencies.
-// It loads the configuration and initializes the store.
+// It performs the following steps:
+// 1. Loads the configuration.
+// 2. Initializes the data store (using WIPS_HOME env var if set, otherwise defaults).
+// 3. Prepares the store (creates necessary directories).
+//
+// Returns an error if any initialization step fails.
 func New() (*App, error) {
 	cfg, err := config.Load()
 	if err != nil {

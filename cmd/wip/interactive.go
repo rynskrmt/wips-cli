@@ -7,26 +7,11 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/rynskrmt/wips-cli/internal/store"
 	"github.com/rynskrmt/wips-cli/internal/usecase"
-	"github.com/spf13/cobra"
 )
 
-func runInteractive(cmd *cobra.Command) error {
-	// 1. Initialize Store
-	// TODO: Refactor to allow dependency injection or shared init logic with root.go
-	// For now, duplicate init logic for simplicity as per plan
-	s, err := store.NewStore(os.Getenv("WIPS_HOME"))
-	if err != nil {
-		return fmt.Errorf("failed to init store: %w", err)
-	}
-	if err := s.Prepare(); err != nil {
-		return fmt.Errorf("failed to prepare store: %w", err)
-	}
-
-	// 2. Initialize Usecase
-	u := usecase.NewNoteUsecase(s)
-
+func runInteractive(u usecase.NoteUsecase) error {
+	// Initialize CWD
 	cwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get current working directory: %w", err)

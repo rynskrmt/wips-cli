@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rynskrmt/wips-cli/internal/store"
+	"github.com/rynskrmt/wips-cli/internal/app"
 	"github.com/rynskrmt/wips-cli/internal/usecase"
 	"github.com/spf13/cobra"
 )
@@ -21,23 +21,20 @@ var rootCmd = &cobra.Command{
 }
 
 func runNoteWrapper(cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		return runInteractive(cmd)
-	}
-
-	message := args[0]
-
-	// 1. Initialize Store
-	s, err := store.NewStore(os.Getenv("WIPS_HOME"))
+	// 1. Initialize App (Centralized)
+	a, err := app.New()
 	if err != nil {
-		return fmt.Errorf("failed to init store: %w", err)
-	}
-	if err := s.Prepare(); err != nil {
-		return fmt.Errorf("failed to prepare store: %w", err)
+		return fmt.Errorf("failed to initialize app: %w", err)
 	}
 
 	// 2. Initialize Usecase
-	u := usecase.NewNoteUsecase(s)
+	u := usecase.NewNoteUsecase(a.Store)
+
+	if len(args) == 0 {
+		return runInteractive(u)
+	}
+
+	message := args[0]
 
 	cwd, err := os.Getwd()
 	if err != nil {

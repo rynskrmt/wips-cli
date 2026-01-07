@@ -12,9 +12,13 @@ import (
 	"github.com/rynskrmt/wips-cli/internal/store"
 )
 
+// ContentProvider is a function that retrieves content for an event (e.g. running git show).
 type ContentProvider func() ([]byte, error)
 
+// CaptureUsecase defines the business logic for capturing external events (like git commits).
 type CaptureUsecase interface {
+	// CaptureEvent captures an event of a specific type.
+	// It uses the contentProvider to get the event payload.
 	CaptureEvent(eventType string, wd string, contentProvider ContentProvider) error
 }
 
@@ -22,10 +26,14 @@ type captureUsecase struct {
 	store store.Store
 }
 
+// NewCaptureUsecase creates a new CaptureUsecase.
 func NewCaptureUsecase(s store.Store) CaptureUsecase {
 	return &captureUsecase{store: s}
 }
 
+// CaptureEvent implementation.
+// It currently supports "git-commit" events.
+// It executes the content provider (e.g., git show), gathers context, and saves the event.
 func (u *captureUsecase) CaptureEvent(eventType string, wd string, contentProvider ContentProvider) error {
 	// Get Info
 	if eventType != "git-commit" {

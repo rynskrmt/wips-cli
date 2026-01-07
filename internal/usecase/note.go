@@ -13,7 +13,11 @@ import (
 	"github.com/rynskrmt/wips-cli/internal/store"
 )
 
+// NoteUsecase defines the business logic for recording notes.
 type NoteUsecase interface {
+	// RecordNote creates and saves a new note event.
+	// It automatically gathers context (environment, git repo, working directory).
+	// Returns the recorded event or an error.
 	RecordNote(message string, wd string) (*model.WipsEvent, error)
 }
 
@@ -21,10 +25,17 @@ type noteUsecase struct {
 	store store.Store
 }
 
+// NewNoteUsecase creates a new NoteUsecase instance.
 func NewNoteUsecase(s store.Store) NoteUsecase {
 	return &noteUsecase{store: s}
 }
 
+// RecordNote implementation.
+// 1. Checks ignore patterns in config.
+// 2. Collects environment info (user, host).
+// 3. Collects git repository info if in a git repo.
+// 4. Saves context dictionaries to store.
+// 5. Appends the event to the store.
 func (u *noteUsecase) RecordNote(message string, wd string) (*model.WipsEvent, error) {
 	// Check Config
 	cfg, err := config.Load()
