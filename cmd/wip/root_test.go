@@ -31,7 +31,7 @@ func TestRunNote(t *testing.T) {
 	// Test
 	msg := "Integration Test Note"
 	u := usecase.NewNoteUsecase(s)
-	err = u.RecordNote(msg, tempDir)
+	_, err = u.RecordNote(msg, tempDir)
 	if err != nil {
 		t.Errorf("RecordNote() error = %v", err)
 	}

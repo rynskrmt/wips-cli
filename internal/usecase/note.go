@@ -14,7 +14,7 @@ import (
 )
 
 type NoteUsecase interface {
-	RecordNote(message string, wd string) error
+	RecordNote(message string, wd string) (*model.WipsEvent, error)
 }
 
 type noteUsecase struct {
@@ -25,7 +25,7 @@ func NewNoteUsecase(s store.Store) NoteUsecase {
 	return &noteUsecase{store: s}
 }
 
-func (u *noteUsecase) RecordNote(message string, wd string) error {
+func (u *noteUsecase) RecordNote(message string, wd string) (*model.WipsEvent, error) {
 	// Check Config
 	cfg, err := config.Load()
 	if err == nil {
@@ -33,7 +33,7 @@ func (u *noteUsecase) RecordNote(message string, wd string) error {
 			matched, _ := filepath.Match(pattern, wd)
 			if matched {
 				fmt.Println("Ignored by config.")
-				return nil
+				return nil, nil
 			}
 			// TODO: Implement more robust matching (e.g. support for relative paths, globstar)
 		}
@@ -87,9 +87,8 @@ func (u *noteUsecase) RecordNote(message string, wd string) error {
 
 	// Save
 	if err := u.store.AppendEvent(event); err != nil {
-		return fmt.Errorf("failed to save event: %w", err)
+		return nil, fmt.Errorf("failed to save event: %w", err)
 	}
 
-	fmt.Printf("✅ Note recorded: %s (ID: %s)\n", message, event.ID)
-	return nil
+	return event, nil
 }

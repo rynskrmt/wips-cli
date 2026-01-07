@@ -22,7 +22,7 @@ var rootCmd = &cobra.Command{
 
 func runNoteWrapper(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		return cmd.Help()
+		return runInteractive(cmd)
 	}
 
 	message := args[0]
@@ -44,7 +44,14 @@ func runNoteWrapper(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get current working directory: %w", err)
 	}
 
-	return u.RecordNote(message, cwd)
+	event, err := u.RecordNote(message, cwd)
+	if err != nil {
+		return err
+	}
+	if event != nil {
+		fmt.Printf("✅ Note recorded: %s (ID: %s)\n", event.Content, event.ID)
+	}
+	return nil
 }
 
 func Execute() {
