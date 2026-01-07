@@ -47,7 +47,7 @@ func (r *SummaryRenderer) RenderPretty(result *usecase.SummaryResult) {
 				icon, summaryStr := FormatEventForSummary(e)
 
 				summaryStr = descStyle.Render(summaryStr)
-				fmt.Fprintf(w, "    %s\t%s  %s\t\n", timeStr, icon, summaryStr)
+				fmt.Fprintf(w, "    %s\t%s  %s\n", timeStr, icon, summaryStr)
 			}
 			w.Flush()
 		}

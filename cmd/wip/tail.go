@@ -147,15 +147,15 @@ var tailCmd = &cobra.Command{
 
 			if showID {
 				if ctxStr != "" {
-					fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t\n", timeStr, icon, summary, ctxStr, e.ID)
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", timeStr, icon, summary, ctxStr, e.ID)
 				} else {
-					fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n", timeStr, icon, summary, e.ID)
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", timeStr, icon, summary, e.ID)
 				}
 			} else {
 				if ctxStr != "" {
-					fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n", timeStr, icon, summary, ctxStr)
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", timeStr, icon, summary, ctxStr)
 				} else {
-					fmt.Fprintf(w, "%s\t%s\t%s\t\n", timeStr, icon, summary)
+					fmt.Fprintf(w, "%s\t%s\t%s\n", timeStr, icon, summary)
 				}
 			}
 		}
