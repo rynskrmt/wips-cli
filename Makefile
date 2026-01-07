@@ -2,9 +2,12 @@ BINARY_NAME=wip
 BUILD_DIR=bin
 CMD_PATH=./cmd/wip
 
-.PHONY: all build test clean install uninstall dev run help
+.PHONY: all build test clean install uninstall dev run help setup
 
 all: build
+
+setup: build install ## Build and install in one step
+	@echo "✅ $(BINARY_NAME) installed to /usr/local/bin"
 
 build: ## Build the binary
 	@mkdir -p $(BUILD_DIR)
