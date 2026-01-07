@@ -68,10 +68,11 @@ var syncCmd = &cobra.Command{
 		}
 
 		// Prepare Usecase for fetching data
+		includeHidden, _ := cmd.Flags().GetBool("include-hidden")
 		summaryUC := usecase.NewSummaryUsecase(a.Store)
 		opts := usecase.SummaryOptions{
-			IncludeHidden: false, // Default false for sync? Or true? Let's say false for now to keep private stuff private unless wanted.
-			// Logic for date selection relies on same logic as summary
+			IncludeHidden: includeHidden,
+			HiddenDirs:    a.HiddenDirs(), // Apply hidden directory filter to respect user's privacy settings
 		}
 
 		if all {
@@ -152,4 +153,5 @@ func init() {
 	syncCmd.Flags().Bool("all", false, "Sync all history")
 	syncCmd.Flags().Bool("dry-run", false, "Dry run")
 	syncCmd.Flags().Bool("create", false, "Create daily note if missing")
+	syncCmd.Flags().Bool("include-hidden", false, "Include hidden directories in sync")
 }
