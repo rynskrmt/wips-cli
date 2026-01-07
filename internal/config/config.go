@@ -4,14 +4,29 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pelletier/go-toml/v2"
+	"github.com/rynskrmt/wips-cli/internal/filter"
 )
 
 type Config struct {
-	IgnorePatterns    []string `toml:"ignore_patterns"`
-	HiddenDirectories []string `toml:"hidden_directories"`
+	IgnorePatterns    []string   `toml:"ignore_patterns"`
+	HiddenDirectories []string   `toml:"hidden_directories"`
+	Sync              SyncConfig `toml:"sync"`
+}
+
+type SyncConfig struct {
+	DefaultTargets []string        `toml:"default_targets"`
+	Obsidian       *ObsidianConfig `toml:"obsidian,omitempty"`
+}
+
+type ObsidianConfig struct {
+	Enabled             bool   `toml:"enabled"`
+	Path                string `toml:"path"` // Absolute path to Daily Notes folder
+	DailyFilenameFormat string `toml:"daily_filename_format"`
+	SectionHeader       string `toml:"section_header"`
+	AppendAt            string `toml:"append_at"` // "top" or "bottom"
+	SummaryFormat       string `toml:"summary_format"`
 }
 
 // GetConfigPath returns the path to the config file.
@@ -23,13 +38,18 @@ func GetConfigPath() (string, error) {
 	return filepath.Join(home, ".wip", "config.toml"), nil
 }
 
+// Load reads the config from the default file.
 func Load() (*Config, error) {
 	configPath, err := GetConfigPath()
 	if err != nil {
 		return nil, err
 	}
+	return LoadFrom(configPath)
+}
 
-	f, err := os.Open(configPath)
+// LoadFrom reads the config from a specific file path.
+func LoadFrom(path string) (*Config, error) {
+	f, err := os.Open(path)
 	if os.IsNotExist(err) {
 		return &Config{}, nil // Return empty config if not exists
 	}
@@ -47,20 +67,24 @@ func Load() (*Config, error) {
 	return &cfg, nil
 }
 
-// Save writes the config to file.
+// Save writes the config to the default file.
 func (c *Config) Save() error {
 	configPath, err := GetConfigPath()
 	if err != nil {
 		return err
 	}
+	return c.SaveTo(configPath)
+}
 
+// SaveTo writes the config to a specific file path.
+func (c *Config) SaveTo(path string) error {
 	// Ensure directory exists
-	dir := filepath.Dir(configPath)
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create config dir: %w", err)
 	}
 
-	f, err := os.Create(configPath)
+	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
@@ -119,15 +143,7 @@ func (c *Config) RemoveHiddenDir(path string) error {
 }
 
 // IsHiddenDir checks if a path is under a hidden directory.
+// Delegates to the filter package for the actual implementation.
 func (c *Config) IsHiddenDir(path string) bool {
-	for _, hiddenDir := range c.HiddenDirectories {
-		// Check if path starts with hiddenDir (is under the hidden directory)
-		if strings.HasPrefix(path, hiddenDir) {
-			// Ensure it's actually a subdirectory, not just a prefix match
-			if path == hiddenDir || strings.HasPrefix(path, hiddenDir+string(filepath.Separator)) {
-				return true
-			}
-		}
-	}
-	return false
+	return filter.IsHiddenDir(path, c.HiddenDirectories)
 }

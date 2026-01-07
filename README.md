@@ -75,6 +75,7 @@ Here is the detail for each of the commands
 | `edit`    | `e`   | Edit an event by ID (default: latest)                                    |
 | `delete`  |       | Delete an event by ID (default: latest)                                  |
 | `hooks`   |       | Manage git hooks integration to automatically log commits                |
+| `sync`    |       | Sync logs to external tools (e.g. Obsidian)                              |
 | `config`  |       | Manage global configuration settings                                     |
 
 ## Summaries
@@ -104,6 +105,43 @@ You can export summaries to different formats
 ```shell
 $ wip sum --week --format md --out report.md
 ```
+
+## Sync (Experimental)
+
+You can sync your daily logs to external tools like Obsidian.
+
+### Setup for Obsidian
+
+First, configure the path to your Obsidian Daily Notes folder:
+
+```shell
+$ wip config sync obsidian enable --path "~/ObsidianVault/Daily"
+```
+
+### Run Sync
+
+To sync your logs (grouped by directory) to today's daily note:
+
+```shell
+$ wip sync
+```
+
+This appends your `wips-cli` logs to a specific section (default: `## wips-cli logs`) in your daily note. It is safe to run multiple times; it updates the section without duplicating content.
+
+### Options
+
+- `--days <N>`: Sync logs for the past N days. Useful for catching up or batch syncing.
+  ```shell
+  $ wip sync --days 3
+  ```
+- `--all`: Sync all history (currently limited to the last 365 days).
+  ```shell
+  $ wip sync --all
+  ```
+- `--create`: Create the daily note if it does not exist. (Default: skip syncing for missing dates)
+  ```shell
+  $ wip sync --create
+  ```
 
 ## Search
 

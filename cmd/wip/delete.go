@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/rynskrmt/wips-cli/internal/store"
+	"github.com/rynskrmt/wips-cli/internal/app"
 	"github.com/spf13/cobra"
 )
 
@@ -19,9 +18,10 @@ var deleteCmd = &cobra.Command{
 	Long:  `Delete an event. If no ID is specified, the latest event of the current month is deleted.`,
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		s, err := store.NewStore(os.Getenv("WIPS_HOME"))
+		// Initialize app with centralized dependencies
+		a, err := app.New()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to initialize app: %w", err)
 		}
 
 		var eventID string
@@ -32,9 +32,9 @@ var deleteCmd = &cobra.Command{
 			// Find latest event
 			now := time.Now()
 			start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-			events, err := s.GetEvents(start, now)
+			events, err := a.Store.GetEvents(start, now)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get events: %w", err)
 			}
 			if len(events) == 0 {
 				return fmt.Errorf("no events found for this month")
@@ -45,9 +45,9 @@ var deleteCmd = &cobra.Command{
 
 		// Confirm? (Maybe later. Simple delete is fine for now.)
 
-		err = s.DeleteEvent(eventID)
+		err = a.Store.DeleteEvent(eventID)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to delete event %s: %w", eventID, err)
 		}
 
 		fmt.Printf("Event %s deleted.\n", eventID)

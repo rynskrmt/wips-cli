@@ -2,9 +2,9 @@ package usecase
 
 import (
 	"sort"
-	"strings"
 	"time"
 
+	"github.com/rynskrmt/wips-cli/internal/filter"
 	"github.com/rynskrmt/wips-cli/internal/model"
 	"github.com/rynskrmt/wips-cli/internal/store"
 )
@@ -46,18 +46,6 @@ type DayDirGroup struct {
 	Date     string
 	DirMap   map[string]*DirGroup
 	DirOrder []string
-}
-
-// isHiddenDir checks if a path is under a hidden directory.
-func isHiddenDir(path string, hiddenDirs []string) bool {
-	for _, hiddenDir := range hiddenDirs {
-		if strings.HasPrefix(path, hiddenDir) {
-			if path == hiddenDir || strings.HasPrefix(path, hiddenDir+"/") {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // GetSummary retrieves and organizes events based on options
@@ -123,7 +111,7 @@ func (u *SummaryUsecase) GetSummary(opts SummaryOptions) (*SummaryResult, error)
 				}
 			}
 
-			eventIsHidden := isHiddenDir(dirPath, opts.HiddenDirs)
+			eventIsHidden := filter.IsHiddenDir(dirPath, opts.HiddenDirs)
 
 			if opts.HiddenOnly {
 				if !eventIsHidden {
