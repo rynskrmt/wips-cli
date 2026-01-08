@@ -59,6 +59,26 @@ Simply run it with a message to record a note with auto-detected context (Git re
 wip "Refactoring auth logic"
 ```
 
+## Interactive Mode
+
+If you run `wip` without arguments, it starts **interactive mode**. This is useful for continuous note-taking.
+
+```shell
+$ wip
+```
+
+<p align="center" style="margin: 20px 0;">
+    <img src="assets/interactive-mode.gif" alt="Interactive Mode Demo" width="800">
+    <br>
+    <em>Interactive Mode</em>
+</p>
+
+Type your note and press Enter to record it immediately.
+- Type `:help` for available commands.
+- Press Enter on an empty line or `Ctrl+C` to exit.
+
+
+
 ## Commands
 
 You can use several commands to manage your notes and view summaries.
