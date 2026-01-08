@@ -30,6 +30,7 @@ type SummaryOptions struct {
 	IncludeHidden bool     // Include hidden directories
 	HiddenOnly    bool     // Show only hidden directories
 	HiddenDirs    []string // List of hidden directory patterns from config
+	Date          string   // Filter by specific date (YYYY-MM-DD)
 }
 
 // SummaryResult holds the grouped data for display.
@@ -75,6 +76,14 @@ func (u *SummaryUsecase) GetSummary(opts SummaryOptions) (*SummaryResult, error)
 			weekday = 7
 		}
 		start = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -(weekday - 1))
+	} else if opts.Date != "" {
+		// Specific Date
+		parsedDate, err := time.ParseInLocation("2006-01-02", opts.Date, time.Local)
+		if err != nil {
+			return nil, err
+		}
+		start = parsedDate
+		end = parsedDate.Add(24*time.Hour - time.Nanosecond)
 	} else if opts.Days > 0 {
 		start = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -opts.Days)
 	} else {
@@ -143,7 +152,7 @@ func (u *SummaryUsecase) GetSummary(opts SummaryOptions) (*SummaryResult, error)
 	dayGroupMap := make(map[string]*DayDirGroup)
 
 	for _, e := range events {
-		dateStr := e.TS.Format("2006-01-02")
+		dateStr := e.TS.In(time.Local).Format("2006-01-02")
 
 		if _, exists := dayGroupMap[dateStr]; !exists {
 			dayGroups = append(dayGroups, DayDirGroup{
