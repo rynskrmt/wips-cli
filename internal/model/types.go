@@ -14,14 +14,26 @@ const (
 	EventTypeUndo      EventType = "undo"
 )
 
-// WipsEvent represents a single event log.
+// WipsEvent represents a single event log in the WIPS system.
+// It is the core data structure stored in the daily ndjson files.
 type WipsEvent struct {
-	ID      string          `json:"id"`             // ULID
-	TS      time.Time       `json:"ts"`             // ISO 8601
-	Type    EventType       `json:"type"`           // "note" | "git_commit" | "undo"
-	Content string          `json:"content"`        // Main text
-	Ctx     Context         `json:"ctx"`            // Context info
-	Meta    json.RawMessage `json:"meta,omitempty"` // Extension fields
+	// ID is the unique identifier for the event, using ULID format.
+	ID string `json:"id"`
+
+	// TS is the timestamp of the event in ISO 8601 format.
+	TS time.Time `json:"ts"`
+
+	// Type distinguishes the kind of event (e.g., "note", "git_commit").
+	Type EventType `json:"type"`
+
+	// Content is the main payload of the event (the note text or commit message).
+	Content string `json:"content"`
+
+	// Ctx contains environmental context associated with the event (repository, cwd, etc.).
+	Ctx Context `json:"ctx"`
+
+	// Meta is a flexible field for any additional metadata, stored as raw JSON.
+	Meta json.RawMessage `json:"meta,omitempty"`
 }
 
 // Context represents the environment state context for an event.

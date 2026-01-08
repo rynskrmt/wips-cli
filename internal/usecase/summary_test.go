@@ -159,4 +159,55 @@ func TestSummaryUsecase_GetSummary(t *testing.T) {
 			t.Error("Expected to find 📁 /path/to/cwd group")
 		}
 	})
+
+	t.Run("Date Option", func(t *testing.T) {
+		// Mock store with specific dates, using Local time to match Usecase logic
+		targetDateStr := "2024-01-15"
+		targetDate, _ := time.ParseInLocation("2006-01-02", targetDateStr, time.Local)
+
+		otherDateStr := "2024-01-16"
+		otherDate, _ := time.ParseInLocation("2006-01-02", otherDateStr, time.Local)
+
+		events := []model.WipsEvent{
+			{ID: "t1", TS: targetDate.Add(1 * time.Hour), Type: model.EventTypeNote},
+			{ID: "t2", TS: targetDate.Add(23 * time.Hour), Type: model.EventTypeGitCommit},
+			{ID: "o1", TS: otherDate.Add(1 * time.Hour), Type: model.EventTypeNote},
+		}
+
+		ms := &MockStore{Events: events}
+		uc := NewSummaryUsecase(ms)
+
+		// Test target date
+		res, err := uc.GetSummary(SummaryOptions{Date: targetDateStr})
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		// Should have 1 day group
+		if len(res.DayGroups) != 1 {
+			t.Errorf("Expected 1 day group, got %d", len(res.DayGroups))
+		} else {
+			dg := res.DayGroups[0]
+			if dg.Date != targetDateStr {
+				t.Errorf("Expected date %s, got %s", targetDateStr, dg.Date)
+			}
+			// Should have t1 and t2 (2 events total across directories)
+			count := 0
+			for _, g := range dg.DirMap {
+				count += len(g.Events)
+			}
+			if count != 2 {
+				t.Errorf("Expected 2 events for target date, got %d", count)
+			}
+		}
+
+		// Test other date
+		res2, err := uc.GetSummary(SummaryOptions{Date: otherDateStr})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res2.DayGroups) != 1 {
+			t.Errorf("Expected 1 day group for other date, got %d", len(res2.DayGroups))
+		}
+	})
 }

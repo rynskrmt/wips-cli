@@ -90,18 +90,7 @@ var syncCmd = &cobra.Command{
 			fmt.Println("Syncing --all is not fully optimized yet, syncing last 365 days...")
 			opts.Days = 365
 		} else if dateStr != "" {
-			// Specific Date
-			// Usecase doesn't directly support arbitrary `dateStr` in options struct easily without modification
-			// The `summary` command doesn't actually support `--date YYYY-MM-DD` yet!
-			// It supports `--day`, `--week`, `--days N`.
-			// Wait, the spec said `wip sync --date`.
-			// If SummaryUsecase doesn't support it, we need to create a new way or modify it.
-			// Let's stick to `--days` for now or try to use `days` offset if we can calculate it (messy).
-			// Actually, we can just use `store` directly if Usecase is too restrictive.
-			// But Usecase adds context hydration (Git info etc).
-
-			// Let's implement basics: --days and today (default)
-			fmt.Printf("Syncing specific date %s not fully implemented, falling back to --days\n", dateStr)
+			opts.Date = dateStr
 		} else if days > 0 {
 			opts.Days = days
 		} else {

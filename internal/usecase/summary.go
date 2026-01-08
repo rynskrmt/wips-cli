@@ -9,46 +9,53 @@ import (
 	"github.com/rynskrmt/wips-cli/internal/store"
 )
 
-// SummaryUsecase handles business logic for the summary command
+// SummaryUsecase handles business logic for the summary command.
+// It retrieves events, filters them based on options, and groups them for display.
 type SummaryUsecase struct {
 	Store store.Store
 }
 
+// NewSummaryUsecase creates a new SummaryUsecase.
 func NewSummaryUsecase(s store.Store) *SummaryUsecase {
 	return &SummaryUsecase{Store: s}
 }
 
-// SummaryOptions defines filtering criteria
+// SummaryOptions defines filtering criteria for event summary.
 type SummaryOptions struct {
-	Week          bool
-	LastWeek      bool
-	Days          int
-	CommitsOnly   bool
-	NotesOnly     bool
-	IncludeHidden bool
-	HiddenOnly    bool
-	HiddenDirs    []string
+	Week          bool     // Filter by current week
+	LastWeek      bool     // Filter by last week
+	Days          int      // Filter by past N days
+	CommitsOnly   bool     // Show only git commits
+	NotesOnly     bool     // Show only manual notes
+	IncludeHidden bool     // Include hidden directories
+	HiddenOnly    bool     // Show only hidden directories
+	HiddenDirs    []string // List of hidden directory patterns from config
+	Date          string   // Filter by specific date (YYYY-MM-DD)
 }
 
-// SummaryResult holds the grouped data for display
+// SummaryResult holds the grouped data for display.
+// Events are grouped by Day, then by Directory/Context.
 type SummaryResult struct {
 	Start     time.Time
 	End       time.Time
 	DayGroups []DayDirGroup
 }
 
+// DirGroup represents a group of events within a specific directory/repository.
 type DirGroup struct {
-	Name   string
+	Name   string // Display name (e.g. "@wips-cli" or "📁 /path/to/dir")
 	Events []model.WipsEvent
 }
 
+// DayDirGroup represents a group of events for a specific day.
 type DayDirGroup struct {
-	Date     string
+	Date     string // YYYY-MM-DD
 	DirMap   map[string]*DirGroup
-	DirOrder []string
+	DirOrder []string // Sorted list of keys for DirMap
 }
 
-// GetSummary retrieves and organizes events based on options
+// GetSummary retrieves and organizes events based on options.
+// It returns a tree-like structure (Day -> Directory -> Events) suitable for rendering.
 func (u *SummaryUsecase) GetSummary(opts SummaryOptions) (*SummaryResult, error) {
 	now := time.Now()
 	var start time.Time
@@ -69,6 +76,14 @@ func (u *SummaryUsecase) GetSummary(opts SummaryOptions) (*SummaryResult, error)
 			weekday = 7
 		}
 		start = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -(weekday - 1))
+	} else if opts.Date != "" {
+		// Specific Date
+		parsedDate, err := time.ParseInLocation("2006-01-02", opts.Date, time.Local)
+		if err != nil {
+			return nil, err
+		}
+		start = parsedDate
+		end = parsedDate.Add(24*time.Hour - time.Nanosecond)
 	} else if opts.Days > 0 {
 		start = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -opts.Days)
 	} else {
@@ -137,7 +152,7 @@ func (u *SummaryUsecase) GetSummary(opts SummaryOptions) (*SummaryResult, error)
 	dayGroupMap := make(map[string]*DayDirGroup)
 
 	for _, e := range events {
-		dateStr := e.TS.Format("2006-01-02")
+		dateStr := e.TS.In(time.Local).Format("2006-01-02")
 
 		if _, exists := dayGroupMap[dateStr]; !exists {
 			dayGroups = append(dayGroups, DayDirGroup{
