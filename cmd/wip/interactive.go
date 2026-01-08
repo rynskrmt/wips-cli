@@ -19,7 +19,10 @@ func runInteractive(u usecase.NoteUsecase) error {
 
 	// 3. Start Loop
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("wips-cli interactive mode.")
+
+	// Banner
+	c := color.New(color.FgCyan, color.Bold)
+	c.Println("wips-cli interactive mode")
 	fmt.Println("Type your memo and press Enter to record.")
 	fmt.Println("Type \":help\" for available commands.")
 	fmt.Println("Press Ctrl+C or Enter on an empty line to exit.")
