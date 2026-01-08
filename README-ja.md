@@ -14,7 +14,9 @@
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
 
 <p align="center" style="margin: 20px 0;">
-    <img src="assets/basic-usage.gif" alt="動作デモ" width="800">
+    <img src="assets/interactive-mode.gif" alt="動作デモ" width="800">
+    <br>
+    <em>基本的な使い方</em>
 </p>
 
 </div>
@@ -79,7 +81,7 @@ wip [command]
 | `sync`    |            | 外部ツール（Obsidian等）へのログ同期                 |
 | `config`  |            | グローバル設定の管理                                 |
 
-## 最近のアクティビティ
+## 直近の記録を確認
 
 現在のディレクトリでの作業履歴を確認
 
@@ -87,7 +89,18 @@ wip [command]
 $ wip tail   # または: wip t
 ```
 
-`-g`オプションで全プロジェクトの履歴を確認できます。
+<p align="center" style="margin: 20px 0;">
+    <img src="assets/tail.gif" alt="直近の記録を確認できます" width="800">
+    <br>
+    <em>直近の記録を確認できます</em>
+</p>
+
+`-g`で全プロジェクトの履歴を表示、`-n`で件数を指定できます。
+
+```shell
+$ wip tail -g      # 全プロジェクトの履歴
+$ wip tail -n 20   # 直近20件を表示
+```
 
 ## 作業サマリー
 
@@ -99,6 +112,8 @@ $ wip summary   # または: wip sum
 
 <p align="center" style="margin: 20px 0;">
     <img src="assets/summary.gif" alt="サマリーのデモ" width="800">
+    <br>
+    <em>1日のメモをサッと確認できます</em>
 </p>
 
 過去の日付や週単位でも確認できます

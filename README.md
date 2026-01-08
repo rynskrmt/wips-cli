@@ -14,7 +14,9 @@
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
 
 <p align="center" style="margin: 20px 0;">
-    <img src="assets/basic-usage.gif" alt="Demo Video" width="800">
+    <img src="assets/interactive-mode.gif" alt="Demo Video" width="800">
+    <br>
+    <em>Basic Usage</em>
 </p>
 
 </div>
@@ -78,6 +80,27 @@ Here is the detail for each of the commands
 | `sync`    |       | Sync logs to external tools (e.g. Obsidian)                              |
 | `config`  |       | Manage global configuration settings                                     |
 
+## View Recent Logs
+
+Check the work history in the current directory.
+
+```shell
+$ wip tail   # or: wip t
+```
+
+<p align="center" style="margin: 20px 0;">
+    <img src="assets/tail.gif" alt="View recent logs" width="800">
+    <br>
+    <em>View recent logs</em>
+</p>
+
+Use `-g` to show history across all projects, and `-n` to specify the number of entries.
+
+```shell
+$ wip tail -g      # History across all projects
+$ wip tail -n 20   # Show the last 20 entries
+```
+
 ## Summaries
 
 To view a breakdown of your work for the day, simply run
@@ -88,6 +111,8 @@ $ wip summary   # or: wip sum
 
 <p align="center" style="margin: 20px 0;">
     <img src="assets/summary.gif" alt="Summary Demo" width="800">
+    <br>
+    <em>Quickly review your daily notes</em>
 </p>
 
 You can also check previous days or weeks
