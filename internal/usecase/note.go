@@ -13,19 +13,30 @@ import (
 	"github.com/rynskrmt/wips-cli/internal/store"
 )
 
+// NoteUsecase defines the business logic for recording notes.
 type NoteUsecase interface {
-	RecordNote(message string, wd string) error
+	// RecordNote creates and saves a new note event.
+	// It automatically gathers context (environment, git repo, working directory).
+	// Returns the recorded event or an error.
+	RecordNote(message string, wd string) (*model.WipsEvent, error)
 }
 
 type noteUsecase struct {
 	store store.Store
 }
 
+// NewNoteUsecase creates a new NoteUsecase instance.
 func NewNoteUsecase(s store.Store) NoteUsecase {
 	return &noteUsecase{store: s}
 }
 
-func (u *noteUsecase) RecordNote(message string, wd string) error {
+// RecordNote implementation.
+// 1. Checks ignore patterns in config.
+// 2. Collects environment info (user, host).
+// 3. Collects git repository info if in a git repo.
+// 4. Saves context dictionaries to store.
+// 5. Appends the event to the store.
+func (u *noteUsecase) RecordNote(message string, wd string) (*model.WipsEvent, error) {
 	// Check Config
 	cfg, err := config.Load()
 	if err == nil {
@@ -33,7 +44,7 @@ func (u *noteUsecase) RecordNote(message string, wd string) error {
 			matched, _ := filepath.Match(pattern, wd)
 			if matched {
 				fmt.Println("Ignored by config.")
-				return nil
+				return nil, nil
 			}
 			// TODO: Implement more robust matching (e.g. support for relative paths, globstar)
 		}
@@ -87,9 +98,8 @@ func (u *noteUsecase) RecordNote(message string, wd string) error {
 
 	// Save
 	if err := u.store.AppendEvent(event); err != nil {
-		return fmt.Errorf("failed to save event: %w", err)
+		return nil, fmt.Errorf("failed to save event: %w", err)
 	}
 
-	fmt.Printf("✅ Note recorded: %s (ID: %s)\n", message, event.ID)
-	return nil
+	return event, nil
 }

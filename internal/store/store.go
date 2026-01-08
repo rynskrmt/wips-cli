@@ -13,19 +13,39 @@ import (
 	"github.com/rynskrmt/wips-cli/internal/model"
 )
 
-// Store defines the interface for data persistence
+// Store defines the interface for data persistence.
+// It abstracts the underlying storage mechanism (filesystem, database, etc.).
 type Store interface {
+	// Prepare initializes the storage (creates directories, tables, etc.).
 	Prepare() error
+
+	// AppendEvent adds a new event to the store.
 	AppendEvent(event *model.WipsEvent) error
+
+	// SaveDict saves a key-value pair to a dictionary file (e.g., repos.json, dirs.json).
+	// It should be idempotent.
 	SaveDict(dictName string, key string, value interface{}) error
+
+	// LoadDict loads an entire dictionary file into a map.
 	LoadDict(dictName string) (map[string]interface{}, error)
+
+	// GetEvents retrieves events within a specific time range.
 	GetEvents(start, end time.Time) ([]model.WipsEvent, error)
+
+	// UpdateEvent modifies an existing event identified by ID.
 	UpdateEvent(id string, mutator func(*model.WipsEvent) error) error
+
+	// DeleteEvent permanently removes an event by ID.
 	DeleteEvent(id string) error
+
+	// GetRootDir returns the root directory of the store.
 	GetRootDir() string
 }
 
-// FileStore handles file system operations for wips-cli
+// FileStore handles file system operations for wips-cli.
+// It stores events in monthly NDJSON files (e.g., events/2023-01.ndjson)
+// and metadata in JSON dictionary files.
+// Access to files is guarded by file locks (flock) to ensure safe concurrent access across processes.
 type FileStore struct {
 	RootDir string
 	mu      sync.Mutex // Process-internal lock, file lock used for inter-process
